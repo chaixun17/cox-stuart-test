@@ -1,0 +1,58 @@
+cox_stuart_test <- function(data, stat_type = "S2", alternative = "two.sided") {
+  N <- length(data)
+  
+  if(stat_type == "S1") {
+    k <- floor(N/2)
+    sign_diff <- numeric(k)
+    for(i in 1:k) {
+      sign_diff[i] <- sign(data[i] - data[N-i+1])
+    }
+    w <- N - 2*(1:k) + 1
+    S <- sum(w * (sign_diff > 0))
+    ES <- N^2/8
+    DS <- N*(N^2-1)/24
+    
+  } else if(stat_type == "S2") {
+    k <- floor(N/2)
+    sign_diff <- numeric(k)
+    for(i in 1:k) {
+      sign_diff[i] <- sign(data[i] - data[i + k])
+    }
+    S <- sum(sign_diff > 0)
+    ES <- k/2
+    DS <- k/4
+    
+  } else if(stat_type == "S3") {
+    m <- floor(N/3)
+    u <- floor(2*N/3)
+    sign_diff <- numeric(m)
+    for(i in 1:m) {
+      sign_diff[i] <- sign(data[i] - data[i + u])
+    }
+    S <- sum(sign_diff > 0)
+    ES <- m/2
+    DS <- m/4
+  }
+  
+  # z 统计量
+  z <- (S - ES)/sqrt(DS)
+  
+  if(alternative == "two.sided") {
+    p_value <- 2 * (1 - pnorm(abs(z)))
+  } else if(alternative == "greater") {
+    p_value <- pnorm(z)#上升趋势用左尾
+  } else if(alternative == "less") {
+    p_value <- 1 - pnorm(z)#下降趋势用右尾
+  }
+  
+  return(list(statistic = S, z_value = z, p_value = p_value))
+}
+
+y <- c(17.3, 17.9, 18.4, 18.1, 18.3, 19.6, 18.6, 19.2, 17.7, 
+       20.0, 19.0, 18.8, 19.3, 20.2, 19.9)
+
+res1 <- cox_stuart_test(y, stat_type = "S1", alternative = "greater")
+res2 <- cox_stuart_test(y, stat_type = "S2", alternative = "greater")
+
+res1
+res2
